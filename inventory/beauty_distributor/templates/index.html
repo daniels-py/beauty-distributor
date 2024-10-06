@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorías</title>
+</head>
+<body>
+    <h1>Categorías</h1>
+    <table id="tabla-categorias">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Permite Color</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-categorias-body">
+            <!-- Las filas se llenarán aquí con JavaScript -->
+        </tbody>
+    </table>
+    
+
+    <div id="paginacion"></div>
+
+    <script defer src="{% static 'js/categorias.js' %}"></script> <!-- Ruta al archivo JS -->
+</body>
+</html>
