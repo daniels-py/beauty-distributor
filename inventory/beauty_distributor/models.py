@@ -1,11 +1,13 @@
+from django.core.exceptions import ValidationError
 from django.db import models
-
-# Create your models here.
 
 # Modelo para representar categorías de productos
 class Categoria(models.Model):
     nombre = models.CharField(max_length=255, verbose_name='Nombre de la Categoría')
     descripcion = models.TextField(verbose_name='Descripción de la Categoría')
+    
+    # Método para permitir categorías que gestionen productos con color
+    permite_color = models.BooleanField(default=False, verbose_name='¿Permite Carta de Colores?')
 
     def __str__(self):
         return self.nombre
@@ -46,11 +48,14 @@ class CartaColor(models.Model):
     nombre_color = models.CharField(max_length=255, verbose_name='Nombre del Color')
     hexadecimal = models.CharField(max_length=7, verbose_name='Código Hexadecimal')
     descripcion = models.TextField(verbose_name='Descripción del Color', blank=True)
-    
+
     # Ajustar el campo `marca` con una función predeterminada
     def default_marca():
-        return Marca.objects.first()  # Asigna la primera marca existente en la base de datos
-
+        try:
+            return Marca.objects.first()  # Asigna la primera marca existente en la base de datos
+        except Marca.DoesNotExist:
+            return None  # O lanzar un error si prefieres asegurar que siempre haya una marca
+    
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE, related_name='cartas_colores', default=default_marca)
 
     def __str__(self):
@@ -65,19 +70,19 @@ class CartaColor(models.Model):
 # Modelo para representar productos
 class Producto(models.Model):
     nombre = models.CharField(max_length=255, verbose_name='Nombre del Producto')
-    
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE, related_name='productos')
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, related_name='productos')
     presentacion = models.ForeignKey(Presentacion, on_delete=models.CASCADE, related_name='productos')
-    
-    # El campo descripción ya no es nullable
     descripcion = models.TextField(verbose_name='Descripción del Producto', default="Descripción no disponible")
-    
-    # Relación opcional con CartaColor solo si el producto maneja color
     carta_color = models.ForeignKey(CartaColor, on_delete=models.SET_NULL, null=True, blank=True, related_name='productos', verbose_name='Carta de Color')
 
     def __str__(self):
         return f'{self.nombre} - {self.marca.nombre}'
+
+    # Validación para productos que no deben tener carta de color
+    def clean(self):
+        if self.carta_color and not self.categoria.permite_color:
+            raise ValidationError('Este producto no debería tener carta de color asociada, ya que la categoría no lo permite.')
 
     class Meta:
         verbose_name = 'Producto'
