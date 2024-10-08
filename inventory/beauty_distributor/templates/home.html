@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{% static 'css/components/Nav-bar-home.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/Footer-home.css' %}">
+    <link rel="stylesheet" href="{% static 'css/layouts/Home.css' %}">
+    <script src="https://kit.fontawesome.com/41bcea2ae3.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <header>
+
+        <div class="container__menu">
+            <div class="logo">
+                <img src="{% static 'imagenes/sena.logo.png' %}" alt="">
+            </div>
+            <div class="menu">
+                <i class="fas fa-bars" id="btn_menu" style="color: #494848;"></i>
+                <div id="back_menu"></div>
+                <nav id="nav">
+                    <img src="" alt="">
+                    <ul>
+                        <li><a href="/Principal" id="">Principal</a></li>
+                        <li><a href="/Informacion">Informacion</a></li>
+                        <li><a href="/Nosotros" >Nosotros</a></li>
+                        <li><a href="/iniciarSesion">Iniciar sesion</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+    </header>
+
+
+ 
+    
+
+
+    <footer>
+        <div class="footer-container">
+            <p>© 2024 Tu Empresa. Todos los derechos reservados.</p>
+            <div class="social-icons">
+                <a href="https://facebook.com" target="_blank">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="https://instagram.com" target="_blank">
+                    <i class="fab fa-instagram"></i>
+                </a>
+                <a href="https://www.google.com/maps" target="_blank">
+                    <i class="fas fa-map-marker-alt"></i> <!-- Ícono de mapas -->
+                </a>
+            </div>
+        </div>
+    </footer>
+
+
+
+    <script src="{% static 'js/components/Nav-bar-Home.js' %}"></script>
+
+</body>
+</html>

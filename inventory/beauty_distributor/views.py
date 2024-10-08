@@ -1,3 +1,5 @@
+
+
 from django.shortcuts import render
 from django.db import DatabaseError
 from django.forms import ValidationError
@@ -10,6 +12,13 @@ from beauty_distributor.models import *
 import json
 from django.db.models import Q
 # Create your views here.
+
+
+
+
+
+def Home(request):
+    return render(request, "home.html")
 
 
 
