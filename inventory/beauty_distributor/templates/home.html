@@ -1,4 +1,5 @@
 {% load static %}
+{% load django_browser_reload %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +8,7 @@
     <title>Document</title>
     <link rel="stylesheet" href="{% static 'css/components/Nav-bar-home.css' %}">
     <link rel="stylesheet" href="{% static 'css/components/Footer-home.css' %}">
-    <link rel="stylesheet" href="{% static 'css/layouts/Home.css' %}">
+    <link rel="stylesheet" href="{% static 'css/pages/Home.css' %}">
     <script src="https://kit.fontawesome.com/41bcea2ae3.js" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -15,10 +16,10 @@
 
         <div class="container__menu">
             <div class="logo">
-                <img src="{% static 'imagenes/sena.logo.png' %}" alt="">
+                <img src="{% static 'images/make-up.jpg' %}" alt="">
             </div>
             <div class="menu">
-                <i class="fas fa-bars" id="btn_menu" style="color: #494848;"></i>
+                <i class="fas fa-bars" id="btn_menu" style="color: #524f4f;"></i>
                 <div id="back_menu"></div>
                 <nav id="nav">
                     <img src="" alt="">
@@ -34,11 +35,19 @@
 
     </header>
 
+    <main>
+        <div class="main-container">
+            <div class="welcome-container">
+                <h1>Bienvenido a Nuestra Página</h1>
+                <p>Explora nuestros productos y descubre lo mejor en belleza y cuidado personal.</p>
+                <button class="welcome-button">Saber Más</button>
+            </div>
+        </div>
+    </main>
 
- 
+
+
     
-
-
     <footer>
         <div class="footer-container">
             <p>© 2024 Tu Empresa. Todos los derechos reservados.</p>
@@ -59,6 +68,8 @@
 
 
     <script src="{% static 'js/components/Nav-bar-Home.js' %}"></script>
+    <script src="http://localhost:8000/__reload__/reload.js"></script>
+
 
 </body>
 </html>

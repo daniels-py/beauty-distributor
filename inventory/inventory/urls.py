@@ -16,11 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django_browser_reload import urls as browser_reload_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     # referenciamos el nombre de nuestra aplicacion para vincualar las urls
     path('', include('beauty_distributor.urls')),
+    path("__reload__/", include("django_browser_reload.urls")),
     
 
 ]
+
+urlpatterns += browser_reload_urls.urlpatterns  # Añade esto
