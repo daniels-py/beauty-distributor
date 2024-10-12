@@ -12,9 +12,6 @@ from django.db.models import Q
 # Create your views here.
 
 
-
-
-
 def Home(request):
     return render(request, "home.html")
 
@@ -26,7 +23,7 @@ def Portada(request):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class ListarCategorias(View):   
+class ListarCategorias(View):
     def get(self, request):
         try:
             nombre = request.GET.get('nombre')
@@ -36,15 +33,8 @@ class ListarCategorias(View):
                 categorias = categorias.filter(nombre__icontains=nombre)
 
             # Validación del número de página
-            try:
-                page_number = int(request.GET.get('page', 1))
-            except (ValueError, TypeError):
-                page_number = 1
-
-            try:
-                page_size = min(int(request.GET.get('page_size', 10)), 100)  # Límite de 100 por página
-            except (ValueError, TypeError):
-                page_size = 10  # Valor predeterminado si hay un error en la paginación
+            page_number = self._get_page_number(request)
+            page_size = self._get_page_size(request)
 
             paginator = Paginator(categorias, page_size)
             page_obj = paginator.get_page(page_number)
@@ -54,7 +44,7 @@ class ListarCategorias(View):
                     'id': categoria.id,
                     'nombre': categoria.nombre,
                     'descripcion': categoria.descripcion,
-                    'permite_color': categoria.permite_color  # Agregado para mostrar si permite carta de colores
+                    'permite_color': categoria.permite_color
                 }
                 for categoria in page_obj
             ]
@@ -74,6 +64,17 @@ class ListarCategorias(View):
         except Exception as e:
             return JsonResponse({'error': 'Error interno: ' + str(e)}, status=500)
 
+    def _get_page_number(self, request):
+        try:
+            return int(request.GET.get('page', 1))
+        except (ValueError, TypeError):
+            return 1
+
+    def _get_page_size(self, request):
+        try:
+            return min(int(request.GET.get('page_size', 10)), 100)  # Límite de 100 por página
+        except (ValueError, TypeError):
+            return 10  # Valor predeterminado
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CrearCategoria(View):
@@ -91,23 +92,33 @@ class CrearCategoria(View):
             return JsonResponse({'id': nueva_categoria.id, 'nombre': nueva_categoria.nombre, 'descripcion': nueva_categoria.descripcion}, status=201)
         except (KeyError, ValueError) as e:
             return JsonResponse({'error': str(e)}, status=400)
-        except DatabaseError as e:
+        except DatabaseError:
             return JsonResponse({'error': 'Error al crear la categoría'}, status=500)
         except ValidationError as e:
             return JsonResponse({'error': e.messages}, status=400)
-        
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ListarMarcas(View):
     def get(self, request):
         try:
-            marcas = list(Marca.objects.all().values('id', 'nombre'))
-            if not marcas:  # Verifica si la lista de marcas está vacía
+            marcas = Marca.objects.all()
+
+            datos_marcas = [
+                {
+                    'id': marca.id,
+                    'nombre': marca.nombre,
+                    'productos_count': marca.productos.count()
+                }
+                for marca in marcas
+            ]
+
+            if not datos_marcas:
                 return JsonResponse({'message': 'Marcas no disponibles.'}, status=404)
-            return JsonResponse(marcas, safe=False, status=200)
+
+            return JsonResponse(datos_marcas, safe=False, status=200)
+
         except DatabaseError:
             return JsonResponse({'error': 'Error al obtener las marcas.'}, status=500)
-
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CrearMarca(View):
@@ -127,18 +138,29 @@ class CrearMarca(View):
             return JsonResponse({'error': 'Datos inválidos.'}, status=400)
         except DatabaseError:
             return JsonResponse({'error': 'Error al crear la marca.'}, status=500)
-        
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ListarPresentaciones(View):
     def get(self, request):
-        presentaciones = Presentacion.objects.all()
-        if not presentaciones:
-            return JsonResponse({'mensaje': 'Presentaciones no disponibles'}, status=404)
+        try:
+            presentaciones = Presentacion.objects.all()
 
-        data = [{'id': p.id, 'nombre': p.nombre} for p in presentaciones]
-        return JsonResponse(data, safe=False, status=200)
+            datos_presentaciones = [
+                {
+                    'id': presentacion.id,
+                    'nombre': presentacion.nombre,
+                    'productos_asociados_count': presentacion.productos.count()
+                }
+                for presentacion in presentaciones
+            ]
 
+            if not datos_presentaciones:
+                return JsonResponse({'mensaje': 'Presentaciones no disponibles'}, status=404)
+
+            return JsonResponse(datos_presentaciones, safe=False, status=200)
+
+        except DatabaseError:
+            return JsonResponse({'error': 'Error al obtener las presentaciones'}, status=500)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CrearPresentacion(View):
@@ -155,25 +177,45 @@ class CrearPresentacion(View):
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Datos inválidos'}, status=400)
 
-
 @method_decorator(csrf_exempt, name='dispatch')
 class ListarCartasColor(View):
     def get(self, request):
-        cartas_color = CartaColor.objects.all()
-        if not cartas_color:
-            return JsonResponse({'mensaje': 'Cartas de color no disponibles'}, status=404)
+        try:
+            # Obtener todas las cartas de color junto con las marcas relacionadas
+            cartas_color = CartaColor.objects.select_related('marca').all()
 
-        data = [
-            {
-                'id': cc.id,
-                'nombre_color': cc.nombre_color,  # Cambiado de 'nombre' a 'nombre_color'
-                'codigo_color': cc.codigo_color,
-                'hexadecimal': cc.hexadecimal,
-                'marca': cc.marca.nombre
-            } 
-            for cc in cartas_color
-        ]
-        return JsonResponse(data, safe=False, status=200)
+            # Crear un diccionario para agrupar las cartas de color por marca
+            cartas_por_marca = {}
+            for cc in cartas_color:
+                marca_nombre = cc.marca.nombre
+                if marca_nombre not in cartas_por_marca:
+                    cartas_por_marca[marca_nombre] = []
+                cartas_por_marca[marca_nombre].append({
+                    'id': cc.id,
+                    'nombre_color': cc.nombre_color,
+                    'codigo_color': cc.codigo_color,
+                    'hexadecimal': cc.hexadecimal,
+                    'descripcion': cc.descripcion
+                })
+
+            # Convertir el diccionario en una lista de marcas con sus cartas
+            cartas_de_color = [
+                {
+                    'marca': marca,
+                    'cartas': cartas
+                }
+                for marca, cartas in cartas_por_marca.items()
+            ]
+
+            # Si no hay datos, devolver un mensaje
+            if not cartas_de_color:
+                return JsonResponse({'mensaje': 'Cartas de color no disponibles'}, status=404)
+
+            # Devolver el JSON con la estructura deseada
+            return JsonResponse({'cartas_de_color': cartas_de_color}, safe=False, status=200)
+
+        except DatabaseError:
+            return JsonResponse({'error': 'Error al obtener las cartas de color'}, status=500)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -195,7 +237,6 @@ class CrearCartaColor(View):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
-
 @method_decorator(csrf_exempt, name='dispatch')
 class ListarProductos(View):
     def get(self, request):
@@ -205,7 +246,6 @@ class ListarProductos(View):
 
         data = [{'id': p.id, 'nombre': p.nombre, 'categoria': p.categoria.nombre, 'marca': p.marca.nombre} for p in productos]
         return JsonResponse(data, safe=False, status=200)
-
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CrearProducto(View):
@@ -240,8 +280,6 @@ class CrearProducto(View):
             return JsonResponse({'error': 'Datos inválidos'}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
-
-
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ListarInventario(View):
