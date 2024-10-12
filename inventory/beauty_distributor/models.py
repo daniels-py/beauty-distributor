@@ -60,6 +60,7 @@ class Producto(models.Model):
     presentacion = models.ForeignKey(Presentacion, on_delete=models.CASCADE, related_name='productos')
     descripcion = models.TextField(verbose_name='Descripción del Producto', default="Descripción no disponible")
     carta_color = models.ForeignKey(CartaColor, on_delete=models.SET_NULL, null=True, blank=True, related_name='productos', verbose_name='Carta de Color')
+    precio = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Precio')  # Valor por defecto aquí
 
     def __str__(self):
         return f'{self.nombre} - {self.marca.nombre}'
@@ -72,6 +73,7 @@ class Producto(models.Model):
         verbose_name = 'Producto'
         verbose_name_plural = 'Productos'
         unique_together = ('nombre', 'marca')
+
 
 
 class Inventario(models.Model):
