@@ -97,29 +97,34 @@ class CrearCategoria(View):
         except ValidationError as e:
             return JsonResponse({'error': e.messages}, status=400)
 
+
 @method_decorator(csrf_exempt, name='dispatch')
 class ListarMarcas(View):
     def get(self, request):
         try:
             marcas = Marca.objects.all()
 
-            datos_marcas = [
-                {
-                    'id': marca.id,
-                    'nombre': marca.nombre,
-                    'productos_count': marca.productos.count()
-                }
-                for marca in marcas
-            ]
+            # Estructura de datos más detallada
+            datos_marcas = {
+                'marcas': [
+                    {
+                        'id': marca.id,
+                        'nombre': marca.nombre,
+                        'productos_count': marca.productos.count(),
+                        'descripcion': marca.descripcion if hasattr(marca, 'descripcion') else 'Descripción no disponible',  # Suponiendo que tienes un campo descripción en Marca
+                    }
+                    for marca in marcas
+                ]
+            }
 
-            if not datos_marcas:
+            if not datos_marcas['marcas']:
                 return JsonResponse({'message': 'Marcas no disponibles.'}, status=404)
 
-            return JsonResponse(datos_marcas, safe=False, status=200)
+            return JsonResponse(datos_marcas, status=200)
 
         except DatabaseError:
             return JsonResponse({'error': 'Error al obtener las marcas.'}, status=500)
-
+        
 @method_decorator(csrf_exempt, name='dispatch')
 class CrearMarca(View):
     def post(self, request):
@@ -145,23 +150,26 @@ class ListarPresentaciones(View):
         try:
             presentaciones = Presentacion.objects.all()
 
-            datos_presentaciones = [
-                {
-                    'id': presentacion.id,
-                    'nombre': presentacion.nombre,
-                    'productos_asociados_count': presentacion.productos.count()
-                }
-                for presentacion in presentaciones
-            ]
+            # Estructura de datos más detallada
+            datos_presentaciones = {
+                'presentaciones': [
+                    {
+                        'id': presentacion.id,
+                        'nombre': presentacion.nombre,
+                        'productos_asociados_count': presentacion.productos.count(),
+                        'descripcion': presentacion.descripcion if hasattr(presentacion, 'descripcion') else 'Descripción no disponible',  # Suponiendo que tienes un campo descripción en Presentacion
+                    }
+                    for presentacion in presentaciones
+                ]
+            }
 
-            if not datos_presentaciones:
+            if not datos_presentaciones['presentaciones']:
                 return JsonResponse({'mensaje': 'Presentaciones no disponibles'}, status=404)
 
-            return JsonResponse(datos_presentaciones, safe=False, status=200)
+            return JsonResponse(datos_presentaciones, status=200)
 
         except DatabaseError:
             return JsonResponse({'error': 'Error al obtener las presentaciones'}, status=500)
-
 @method_decorator(csrf_exempt, name='dispatch')
 class CrearPresentacion(View):
     def post(self, request):
@@ -237,49 +245,46 @@ class CrearCartaColor(View):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
+
 @method_decorator(csrf_exempt, name='dispatch')
 class ListarProductos(View):
     def get(self, request):
-        productos = Producto.objects.all()
-        if not productos:
-            return JsonResponse({'mensaje': 'Productos no disponibles'}, status=404)
-
-        data = [{'id': p.id, 'nombre': p.nombre, 'categoria': p.categoria.nombre, 'marca': p.marca.nombre} for p in productos]
-        return JsonResponse(data, safe=False, status=200)
-
-@method_decorator(csrf_exempt, name='dispatch')
-class CrearProducto(View):
-    def post(self, request):
         try:
-            data = json.loads(request.body)
-            nombre = data.get('nombre')
-            categoria_id = data.get('categoria_id')
-            marca_id = data.get('marca_id')
-            presentacion_id = data.get('presentacion_id')
-            carta_color_id = data.get('carta_color_id')
+            productos = Producto.objects.select_related('categoria', 'marca').all()
+            if not productos:
+                return JsonResponse({'mensaje': 'Productos no disponibles'}, status=404)
 
-            if not nombre or not categoria_id or not marca_id or not presentacion_id:
-                return JsonResponse({'error': 'El nombre, categoría, marca y presentación son obligatorios'}, status=400)
+            # Estructura de datos más detallada
+            data = {
+                'productos': [
+                    {
+                        'id': p.id,
+                        'nombre': p.nombre,
+                        'descripcion': p.descripcion,
+                        'precio': str(p.precio),  # Asegúrate de que el precio sea un string si quieres formatearlo
+                        'categoria': {
+                            'id': p.categoria.id,
+                            'nombre': p.categoria.nombre,
+                            'permite_color': p.categoria.permite_color  # Agrega la opción permite_color
+                        },
+                        'marca': {
+                            'id': p.marca.id,
+                            'nombre': p.marca.nombre,
+                            'productos_count': p.marca.productos.count()  # Contador de productos asociados
+                        },
+                        'carta_color': {
+                            'id': p.carta_color.id if p.carta_color else None,
+                            'codigo_color': p.carta_color.codigo_color if p.carta_color else None,
+                            'nombre_color': p.carta_color.nombre_color if p.carta_color else None,
+                        }
+                    } for p in productos
+                ]
+            }
 
-            producto = Producto.objects.create(
-                nombre=nombre,
-                categoria_id=categoria_id,
-                marca_id=marca_id,
-                presentacion_id=presentacion_id,
-                carta_color_id=carta_color_id  # Se puede dejar como None si no se proporciona
-            )
-            return JsonResponse({
-                'id': producto.id,
-                'nombre': producto.nombre,
-                'categoria_id': producto.categoria.id,
-                'marca_id': producto.marca.id,
-                'presentacion_id': producto.presentacion.id
-            }, status=201)
+            return JsonResponse(data, status=200)
 
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Datos inválidos'}, status=400)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+        except DatabaseError:
+            return JsonResponse({'error': 'Error al obtener los productos'}, status=500)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ListarInventario(View):

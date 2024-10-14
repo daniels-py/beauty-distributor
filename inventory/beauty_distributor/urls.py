@@ -7,7 +7,7 @@ urlpatterns = [
         
         # Vistas por defecto
         path('Home/', Home, name="Home"),
-        path('Principal/', Portada, name="Principal"),
+        path('panel/', Portada, name="Principal"),
 
         # Categorías
         path('categorias/', ListarCategorias.as_view(), name='listar_categorias'),
@@ -27,7 +27,7 @@ urlpatterns = [
 
         # Productos
         path('productos/', ListarProductos.as_view(), name='listar_productos'), 
-        path('productos/crear/', CrearProducto.as_view(), name='crear_producto'),  
+        
 
         # Inventario
         path('inventario/', ListarInventario.as_view(), name='listar_inventario'),
