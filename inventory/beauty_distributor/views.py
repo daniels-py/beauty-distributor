@@ -290,22 +290,23 @@ class ListarProductos(View):
 class ListarInventario(View):
     def get(self, request):
         try:
-            inventarios = Inventario.objects.select_related('producto').all()
+            inventarios = Inventario.objects.select_related('producto__presentacion', 'producto__categoria', 'producto__marca').all()
             if not inventarios:
                 return JsonResponse({'mensaje': 'Inventario no disponible'}, status=404)
 
-            data = [
+            productos_disponibles = [
                 {
                     'id': inv.id,
                     'producto': inv.producto.nombre,
                     'categoria': inv.producto.categoria.nombre,
                     'marca': inv.producto.marca.nombre,
+                    'presentacion': inv.producto.presentacion.nombre,
                     'unidades': inv.unidades
                 }
                 for inv in inventarios
             ]
 
-            return JsonResponse(data, safe=False, status=200)
+            return JsonResponse({'productos_disponibles': productos_disponibles}, status=200)
 
         except DatabaseError:
             return JsonResponse({'error': 'Error al obtener el inventario'}, status=500)
