@@ -13,7 +13,7 @@ from django.db.models import Q
 
 
 def Home(request):
-    return render(request, "Home1/home.html")
+    return render(request, "Home/home.html")
 
 
 

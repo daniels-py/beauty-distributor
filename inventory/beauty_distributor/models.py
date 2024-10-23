@@ -1,5 +1,8 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import AbstractUser
+
+
 
 class Categoria(models.Model):
     nombre = models.CharField(max_length=255, unique=True, verbose_name='Nombre de la Categoría')
